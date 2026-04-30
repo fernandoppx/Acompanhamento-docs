@@ -73,9 +73,6 @@ const LoginView = () => {
         className="max-w-md w-full p-8 bg-brand-surface border border-brand-border rounded-2xl shadow-2xl relative z-10"
       >
         <div className="text-center mb-8">
-          <div className="w-24 h-24 bg-brand-surface border border-brand-border rounded-2xl flex items-center justify-center mx-auto mb-6 p-2 shadow-inner">
-            <img src="/input_file_2.png" alt="Monster Docs Logo" className="w-full h-full object-contain" />
-          </div>
           <h1 className="text-4xl font-black tracking-tighter text-white mb-2 uppercase italic flex items-center justify-center gap-2">
             MONSTER <span className="text-brand-primary">DOCS</span>
           </h1>
