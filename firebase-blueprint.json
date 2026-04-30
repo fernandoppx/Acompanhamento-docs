@@ -1,0 +1,40 @@
+{
+  "entities": {
+    "Candidate": {
+      "title": "Candidate",
+      "description": "A candidate for becoming a franchisee.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Candidate full name" },
+        "synthesis": { "type": "string", "description": "Synthesis of the franchisee evaluation" },
+        "meetingLink": { "type": "string", "description": "Link to the Fathom meeting" },
+        "status": { "type": "string", "enum": ["Active", "Archive"], "description": "Overall candidate status" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "status"]
+    },
+    "Document": {
+      "title": "Document",
+      "description": "A document record for a candidate.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "description": "Type/Name of the document" },
+        "status": { "type": "string", "enum": ["SOLICITADO", "ENVIADO"], "description": "Current status of the document" },
+        "requestedDate": { "type": "string", "format": "date-time", "description": "The date when the document was requested" },
+        "sentDate": { "type": "string", "format": "date-time", "description": "The date when the document was sent" }
+      },
+      "required": ["type", "status"]
+    }
+  },
+  "firestore": {
+    "/candidates/{candidateId}": {
+      "schema": "Candidate",
+      "description": "Main candidate records"
+    },
+    "/candidates/{candidateId}/documents/{docId}": {
+      "schema": "Document",
+      "description": "Documents associated with a candidate"
+    }
+  }
+}
