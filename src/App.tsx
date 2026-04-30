@@ -18,7 +18,9 @@ import {
   GoogleAuthProvider, 
   onAuthStateChanged, 
   User,
-  signOut 
+  signOut,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword
 } from 'firebase/auth';
 import { 
   LayoutDashboard, 
@@ -34,6 +36,8 @@ import {
   Clock,
   Trash2,
   Menu,
+  Mail,
+  ArrowLeft,
   X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -55,8 +59,12 @@ function getDelay(requestedDate: Date | null, sentDate: Date | null, status: Doc
 const LoginView = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [authMode, setAuthMode] = useState<'options' | 'email'>('options');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
 
-  const handleLogin = async () => {
+  const handleGoogleLogin = async () => {
     setError(null);
     setIsLoggingIn(true);
     try {
@@ -69,7 +77,33 @@ const LoginView = () => {
       } else if (err.code === 'auth/popup-blocked') {
         setError('O navegador bloqueou a janela de login. Verifique seus bloqueadores de pop-up.');
       } else {
-        setError('Falha na autenticação. Tente novamente.');
+        setError('Falha na autenticação via Google.');
+      }
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setIsLoggingIn(true);
+    try {
+      if (isRegistering) {
+        await createUserWithEmailAndPassword(auth, email, password);
+      } else {
+        await signInWithEmailAndPassword(auth, email, password);
+      }
+    } catch (err: any) {
+      console.error('Email Auth Error:', err);
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        setError('E-mail ou senha incorretos.');
+      } else if (err.code === 'auth/email-already-in-use') {
+        setError('Este e-mail já está em uso.');
+      } else if (err.code === 'auth/weak-password') {
+        setError('A senha deve ter pelo menos 6 caracteres.');
+      } else {
+        setError('Certifique-se de que o provedor Email/Senha está ativo no Firebase Console.');
       }
     } finally {
       setIsLoggingIn(false);
@@ -97,19 +131,95 @@ const LoginView = () => {
         </div>
         
         <div className="space-y-6">
-          <button
-            onClick={handleLogin}
-            disabled={isLoggingIn}
-            className="w-full py-4 bg-white text-black font-black text-xs uppercase tracking-widest rounded-xl flex items-center justify-center gap-3 hover:bg-brand-primary hover:text-black transition-all group disabled:opacity-50 shadow-[0_0_20px_rgba(255,255,255,0.05)]"
-          >
-            {isLoggingIn ? (
-              <Clock className="w-5 h-5 animate-spin" />
+          <AnimatePresence mode="wait">
+            {authMode === 'options' ? (
+              <motion.div 
+                key="options"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className="space-y-4"
+              >
+                <button
+                  onClick={handleGoogleLogin}
+                  disabled={isLoggingIn}
+                  className="w-full py-4 bg-white text-black font-black text-xs uppercase tracking-widest rounded-xl flex items-center justify-center gap-3 hover:bg-brand-primary hover:text-black transition-all group disabled:opacity-50 shadow-[0_0_20px_rgba(255,255,255,0.05)]"
+                >
+                  <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
+                  Acessar com Google
+                </button>
+                
+                <div className="relative py-2">
+                  <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-brand-border" /></div>
+                  <div className="relative flex justify-center text-[10px] uppercase font-black text-zinc-700 bg-brand-surface px-4 tracking-[0.3em]">Ou</div>
+                </div>
+
+                <button
+                  onClick={() => setAuthMode('email')}
+                  className="w-full py-4 bg-zinc-900 text-zinc-400 font-black text-xs uppercase tracking-widest rounded-xl flex items-center justify-center gap-3 hover:bg-zinc-800 hover:text-white transition-all border border-brand-border"
+                >
+                  <Mail className="w-5 h-5" />
+                  E-mail e Senha
+                </button>
+              </motion.div>
             ) : (
-              <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
+              <motion.form 
+                key="email"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                onSubmit={handleEmailAuth}
+                className="space-y-4"
+              >
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-black text-zinc-500 tracking-wider">E-mail</label>
+                  <input 
+                    type="email" 
+                    required 
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    className="w-full bg-brand-bg border border-brand-border rounded-xl p-4 text-sm text-white focus:outline-none focus:border-brand-primary transition-colors"
+                    placeholder="monster@franquia.com"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase font-black text-zinc-500 tracking-wider">Senha</label>
+                  <input 
+                    type="password" 
+                    required 
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    className="w-full bg-brand-bg border border-brand-border rounded-xl p-4 text-sm text-white focus:outline-none focus:border-brand-primary transition-colors"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isLoggingIn}
+                  className="w-full py-4 bg-brand-primary text-black font-black text-xs uppercase tracking-widest rounded-xl flex items-center justify-center gap-3 hover:bg-brand-primary/80 transition-all disabled:opacity-50"
+                >
+                  {isLoggingIn ? <Clock className="w-5 h-5 animate-spin" /> : (isRegistering ? 'Criar Conta' : 'Entrar')}
+                </button>
+
+                <div className="flex flex-col gap-3 pt-2">
+                  <button 
+                    type="button"
+                    onClick={() => setIsRegistering(!isRegistering)}
+                    className="text-[10px] font-bold text-zinc-500 uppercase hover:text-brand-primary transition-colors"
+                  >
+                    {isRegistering ? 'Já tenho uma conta' : 'Criar nova conta de operador'}
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => { setAuthMode('options'); setError(null); }}
+                    className="text-[10px] font-bold text-zinc-700 uppercase hover:text-white flex items-center justify-center gap-2"
+                  >
+                    <ArrowLeft className="w-3 h-3" /> Voltar
+                  </button>
+                </div>
+              </motion.form>
             )}
-            {isLoggingIn ? 'Autenticando...' : 'Acessar com Google'}
-            {!isLoggingIn && <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
-          </button>
+          </AnimatePresence>
 
           <AnimatePresence>
             {error && (
@@ -283,7 +393,13 @@ export default function App() {
 
         <div className="p-4 border-t border-brand-border">
           <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-900 mb-2">
-            <img src={user.photoURL || ''} className="w-8 h-8 rounded-full" alt="" />
+            {user.photoURL ? (
+              <img src={user.photoURL} className="w-8 h-8 rounded-full" alt="" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center">
+                <Users className="w-4 h-4 text-zinc-600" />
+              </div>
+            )}
             <div className="flex-1 overflow-hidden">
               <div className="text-xs font-bold truncate">{user.displayName}</div>
               <div className="text-[10px] text-zinc-500 truncate">{user.email}</div>
