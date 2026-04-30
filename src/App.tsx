@@ -53,40 +53,83 @@ function getDelay(requestedDate: Date | null, sentDate: Date | null, status: Doc
 
 // --- Authentication View ---
 const LoginView = () => {
+  const [error, setError] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
   const handleLogin = async () => {
+    setError(null);
+    setIsLoggingIn(true);
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error(error);
+    } catch (err: any) {
+      console.error('Login Error:', err);
+      if (err.code === 'auth/popup-closed-by-user') {
+        setError('O login foi interrompido porque a janela foi fechada.');
+      } else if (err.code === 'auth/popup-blocked') {
+        setError('O navegador bloqueou a janela de login. Verifique seus bloqueadores de pop-up.');
+      } else {
+        setError('Falha na autenticação. Tente novamente.');
+      }
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-brand-bg relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-96 h-96 bg-brand-primary opacity-5 blur-[120px]" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-brand-primary opacity-5 blur-[120px]" />
+      {/* Hazard Stripes Background Element */}
+      <div className="absolute inset-0 bg-hazard opacity-[0.03] scale-150 rotate-12 pointer-events-none" />
       
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full p-8 bg-brand-surface border border-brand-border rounded-2xl shadow-2xl relative z-10"
+        className="max-w-md w-full p-10 bg-brand-surface border border-brand-border rounded-3xl shadow-2xl relative z-10"
       >
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-black tracking-tighter text-white mb-2 uppercase italic flex items-center justify-center gap-2">
+        <div className="text-center mb-10">
+          <div className="inline-block px-4 py-1.5 bg-brand-primary text-black font-black text-[10px] uppercase tracking-[0.3em] mb-6 skew-x-[-12deg]">
+            Access Point
+          </div>
+          <h1 className="text-5xl font-black tracking-tighter text-white mb-2 uppercase italic">
             MONSTER <span className="text-brand-primary">DOCS</span>
           </h1>
-          <p className="text-zinc-500 font-bold text-xs uppercase tracking-[0.2em]">Franchise Document Management</p>
+          <p className="text-zinc-600 font-bold text-[10px] uppercase tracking-[0.25em]">Franchise Document Control System</p>
         </div>
         
-        <button
-          onClick={handleLogin}
-          className="w-full py-4 bg-white text-black font-bold rounded-xl flex items-center justify-center gap-3 hover:bg-zinc-200 transition-colors group"
-        >
-          <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
-          Acessar com Google
-          <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-        </button>
+        <div className="space-y-6">
+          <button
+            onClick={handleLogin}
+            disabled={isLoggingIn}
+            className="w-full py-4 bg-white text-black font-black text-xs uppercase tracking-widest rounded-xl flex items-center justify-center gap-3 hover:bg-brand-primary hover:text-black transition-all group disabled:opacity-50 shadow-[0_0_20px_rgba(255,255,255,0.05)]"
+          >
+            {isLoggingIn ? (
+              <Clock className="w-5 h-5 animate-spin" />
+            ) : (
+              <img src="https://www.google.com/favicon.ico" alt="Google" className="w-5 h-5" />
+            )}
+            {isLoggingIn ? 'Autenticando...' : 'Acessar com Google'}
+            {!isLoggingIn && <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
+          </button>
+
+          <AnimatePresence>
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="p-4 bg-red-500/10 border border-red-500/20 rounded-xl text-[10px] font-bold text-red-400 uppercase tracking-tight text-center"
+              >
+                {error}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        <div className="mt-12 pt-8 border-t border-brand-border/50 text-center">
+          <p className="text-[9px] text-zinc-700 uppercase font-black tracking-[0.3em]">
+            © 2024 Monster Labs • Security Level 4
+          </p>
+        </div>
       </motion.div>
     </div>
   );
