@@ -73,13 +73,13 @@ const LoginView = () => {
         className="max-w-md w-full p-8 bg-brand-surface border border-brand-border rounded-2xl shadow-2xl relative z-10"
       >
         <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-brand-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-brand-primary/20">
-            <LayoutDashboard className="w-8 h-8 text-brand-primary" />
+          <div className="w-24 h-24 bg-brand-surface border border-brand-border rounded-2xl flex items-center justify-center mx-auto mb-6 p-2 shadow-inner">
+            <img src="/input_file_2.png" alt="Monster Docs Logo" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-white mb-2 uppercase italic">
-            Fábrica de <span className="text-brand-primary">Monstros</span>
+          <h1 className="text-4xl font-black tracking-tighter text-white mb-2 uppercase italic flex items-center justify-center gap-2">
+            MONSTER <span className="text-brand-primary">DOCS</span>
           </h1>
-          <p className="text-zinc-400">CRM de Gestão de Franquias</p>
+          <p className="text-zinc-500 font-bold text-xs uppercase tracking-[0.2em]">Franchise Document Management</p>
         </div>
         
         <button
@@ -173,6 +173,7 @@ export default function App() {
 
   const activeCandidate = candidates.find(c => c.id === selectedCandidateId);
   const filteredCandidates = candidates.filter(c => 
+    c.status === 'Active' && 
     c.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -193,9 +194,9 @@ export default function App() {
         className="bg-brand-surface border-r border-brand-border h-screen flex flex-col overflow-hidden relative"
       >
         <div className="p-6 border-b border-brand-border flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <LayoutDashboard className="w-6 h-6 text-brand-primary" />
-            <h1 className="text-xl font-bold uppercase italic tracking-tight">FDM <span className="text-brand-primary">CRM</span></h1>
+          <div className="flex items-center gap-3">
+            <img src="/input_file_1.png" className="w-8 h-8 object-contain" alt="Logo" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+            <h1 className="text-xl font-black uppercase italic tracking-tighter">MONSTER <span className="text-brand-primary">DOCS</span></h1>
           </div>
         </div>
 
@@ -448,6 +449,19 @@ function CandidateDetail({ candidate, onDelete }: { candidate: Candidate; onDele
     }
   };
 
+  const handleArchiveCandidate = async () => {
+    if (!confirm('Arquivar este candidato? Ele sairá da lista principal.')) return;
+    try {
+      await updateDoc(doc(db, 'candidates', candidate.id), {
+        status: 'Archive',
+        updatedAt: serverTimestamp(),
+      });
+      onDelete(); // Just clear the selection
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `candidates/${candidate.id}`);
+    }
+  };
+
   const handleDeleteCandidate = async () => {
     if (!confirm('Tem certeza que deseja remover este candidato?')) return;
     try {
@@ -596,14 +610,31 @@ function CandidateDetail({ candidate, onDelete }: { candidate: Candidate; onDele
             </div>
           </div>
 
-          <div className="bg-zinc-950/50 border border-brand-border rounded-2xl p-6 flex items-center justify-between">
-            <div className="space-y-1">
-              <h4 className="text-xs font-bold text-zinc-400 uppercase">Status Final</h4>
-              <p className="text-[10px] text-zinc-500 uppercase tracking-tighter">Gestão Operacional e Estratégica</p>
+          <div className="bg-zinc-950/50 border border-brand-border rounded-2xl p-6 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <h4 className="text-xs font-bold text-zinc-400 uppercase">Gestão de Status</h4>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-tighter">Mover para arquivo</p>
+              </div>
+              <button 
+                onClick={handleArchiveCandidate}
+                className="px-4 py-2 bg-zinc-900 border border-brand-border text-zinc-400 text-[10px] font-bold rounded-lg hover:text-white hover:border-zinc-700 transition-colors uppercase italic"
+              >
+                Arquivar Candidato
+              </button>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full">
-               <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-               <span className="text-[10px] font-bold text-emerald-400">QUALIFICADO</span>
+            <div className="h-px bg-brand-border" />
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <h4 className="text-xs font-bold text-red-500/80 uppercase">Remover Registro</h4>
+                <p className="text-[10px] text-zinc-600 uppercase tracking-tighter">Ação irreversível</p>
+              </div>
+              <button 
+                onClick={handleDeleteCandidate}
+                className="p-2.5 text-red-900 hover:text-red-500 hover:bg-red-500/5 rounded-lg transition-colors border border-red-900/10 hover:border-red-500/30"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
