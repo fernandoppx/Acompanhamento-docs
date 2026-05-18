@@ -1,11 +1,13 @@
-export type DocStatus = 'SOLICITADO' | 'ENVIADO';
-
 export interface CandidateDocument {
   id: string;
   type: string;
-  status: DocStatus;
-  requestedDate: Date | null;
   sentDate: Date | null;
+  sentStatus: boolean | null;
+  returnedDate: Date | null;
+  returnedStatus: boolean | null;
+  legalDate: Date | null;
+  legalStatus: boolean | null;
+  updatedAt: Date;
 }
 
 export interface Candidate {
@@ -14,6 +16,10 @@ export interface Candidate {
   synthesis: string;
   meetingLink: string;
   status: 'Active' | 'Archive';
+  boardStatus: boolean | null;
+  paymentDate: Date | null;
+  paymentValue: string;
+  paymentStatus: boolean | null;
   createdAt: Date;
   updatedAt: Date;
 }

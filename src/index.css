@@ -13,6 +13,17 @@
   --color-brand-accent: #855c33; /* Bronze */
 }
 
+/* Custom Date Input Icon Styling */
+.date-input-white::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+  cursor: pointer;
+  opacity: 0.5;
+}
+
+.date-input-white::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+}
+
 @utility bg-hazard {
   background: repeating-linear-gradient(
     45deg,

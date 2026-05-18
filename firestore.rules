@@ -24,35 +24,48 @@ service cloud.firestore {
 
     // Candidate Validation
     function isValidCandidate(data) {
-      return data.keys().hasAll(['name', 'status']) &&
-             data.name is string && data.name.size() > 0 && data.name.size() <= 200 &&
-             data.status in ['Active', 'Archive'] &&
-             (data.get('synthesis', '') is string && data.get('synthesis', '').size() <= 5000) &&
-             (data.get('meetingLink', '') is string && data.get('meetingLink', '').size() <= 1000);
+      return (data.get('name', '') is string) &&
+             (data.get('status', 'Active') in ['Active', 'Archive']) &&
+             (data.get('synthesis', '') is string) &&
+             (data.get('meetingLink', '') is string) &&
+             (data.get('paymentValue', '') is string) &&
+             (data.get('boardStatus', null) == null || data.boardStatus is bool) &&
+             (data.get('paymentStatus', null) == null || data.paymentStatus is bool) &&
+             (data.get('paymentDate', null) == null || data.paymentDate is timestamp) &&
+             (data.get('updatedAt', request.time) is timestamp);
     }
 
     // Document Validation
     function isValidDocument(data) {
-      return data.keys().hasAll(['type', 'status']) &&
-             data.type is string && data.type.size() > 0 && data.type.size() <= 200 &&
-             data.status in ['SOLICITADO', 'ENVIADO'] &&
-             (!data.keys().hasAny(['requestedDate']) || data.requestedDate == null || data.requestedDate is timestamp) &&
-             (!data.keys().hasAny(['sentDate']) || data.sentDate == null || data.sentDate is timestamp);
+      return (data.get('type', '') is string) &&
+             (data.get('sentStatus', null) == null || data.sentStatus is bool) &&
+             (data.get('returnedStatus', null) == null || data.returnedStatus is bool) &&
+             (data.get('legalStatus', null) == null || data.legalStatus is bool) &&
+             (data.get('sentDate', null) == null || data.sentDate is timestamp) &&
+             (data.get('returnedDate', null) == null || data.returnedDate is timestamp) &&
+             (data.get('legalDate', null) == null || data.legalDate is timestamp) &&
+             (data.get('updatedAt', request.time) is timestamp);
     }
 
     match /candidates/{candidateId} {
       allow read: if isSignedIn();
-      allow create: if isSignedIn() && isValidId(candidateId) && isValidCandidate(incoming());
+      allow create: if isSignedIn() && isValidCandidate(incoming());
       allow update: if isSignedIn() && isValidCandidate(incoming()) && (
-        incoming().diff(existing()).affectedKeys().hasOnly(['name', 'status', 'synthesis', 'meetingLink', 'updatedAt'])
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'name', 'status', 'synthesis', 'meetingLink', 
+          'boardStatus', 'paymentDate', 'paymentValue', 'paymentStatus', 'updatedAt'
+        ])
       );
       allow delete: if isSignedIn();
 
       match /documents/{docId} {
         allow read: if isSignedIn();
-        allow create: if isSignedIn() && isValidId(docId) && isValidDocument(incoming());
+        allow create: if isSignedIn() && isValidDocument(incoming());
         allow update: if isSignedIn() && isValidDocument(incoming()) && (
-          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'requestedDate', 'sentDate', 'updatedAt'])
+          incoming().diff(existing()).affectedKeys().hasOnly([
+            'sentDate', 'sentStatus', 'returnedDate', 'returnedStatus', 
+            'legalDate', 'legalStatus', 'updatedAt'
+          ])
         );
         allow delete: if isSignedIn();
       }
