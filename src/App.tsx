@@ -25,6 +25,8 @@ import {
   updateProfile
 } from 'firebase/auth';
 import { 
+  Eye,
+  EyeOff,
   LayoutDashboard, 
   ClipboardList, 
   Users, 
@@ -87,8 +89,10 @@ function StatusToggle({ value, onChange }: { value: boolean | null, onChange: (v
 const LoginView = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isRegistering, setIsRegistering] = useState(false);
 
   const handleEmailAuth = async (e: React.FormEvent) => {
@@ -97,7 +101,10 @@ const LoginView = () => {
     setIsLoggingIn(true);
     try {
       if (isRegistering) {
-        await createUserWithEmailAndPassword(auth, email, password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        if (name) {
+          await updateProfile(userCredential.user, { displayName: name });
+        }
       } else {
         await signInWithEmailAndPassword(auth, email, password);
       }
@@ -148,26 +155,65 @@ const LoginView = () => {
             onSubmit={handleEmailAuth}
             className="space-y-4"
           >
+            <AnimatePresence mode="wait">
+              {isRegistering && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="space-y-1 overflow-hidden"
+                >
+                  <label className="text-[10px] uppercase font-black text-zinc-500 tracking-wider">Nome Completo</label>
+                  <div className="relative">
+                    <UserCircle className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
+                    <input 
+                      type="text" 
+                      required={isRegistering}
+                      value={name}
+                      onChange={e => setName(e.target.value)}
+                      className="w-full bg-brand-bg border border-brand-border rounded-xl p-4 pl-12 text-sm text-white focus:outline-none focus:border-brand-primary transition-colors"
+                      placeholder="Ex: João Silva"
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <div className="space-y-1">
               <label className="text-[10px] uppercase font-black text-zinc-500 tracking-wider">E-mail</label>
-              <input 
-                type="email" 
-                required 
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                className="w-full bg-brand-bg border border-brand-border rounded-xl p-4 text-sm text-white focus:outline-none focus:border-brand-primary transition-colors"
-                placeholder="monster@franquia.com"
-              />
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
+                <input 
+                  type="email" 
+                  required 
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  className="w-full bg-brand-bg border border-brand-border rounded-xl p-4 pl-12 text-sm text-white focus:outline-none focus:border-brand-primary transition-colors"
+                  placeholder="monster@franquia.com"
+                />
+              </div>
             </div>
+
             <div className="space-y-1">
               <label className="text-[10px] uppercase font-black text-zinc-500 tracking-wider">Senha</label>
-              <input 
-                type="password" 
-                required 
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                className="w-full bg-brand-bg border border-brand-border rounded-xl p-4 text-sm text-white focus:outline-none focus:border-brand-primary transition-colors"
-              />
+              <div className="relative">
+                <Fingerprint className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-600" />
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  required 
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  className="w-full bg-brand-bg border border-brand-border rounded-xl p-4 pl-12 pr-12 text-sm text-white focus:outline-none focus:border-brand-primary transition-colors"
+                  placeholder="••••••••"
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-brand-primary transition-colors focus:outline-none"
+                >
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
             </div>
 
             <button
